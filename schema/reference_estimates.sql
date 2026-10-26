@@ -174,6 +174,8 @@ RETURNS shop_markup_config AS $$
 $$ LANGUAGE sql STABLE;
 
 -- Helper: compute consumer price from shop cost using active config
+-- Tiered rules are always sorted ascending by min before matching,
+-- so entry order in markup_rules cannot produce a wrong bracket.
 CREATE OR REPLACE FUNCTION compute_consumer_price(
   p_shop_id TEXT,
   p_shop_cost NUMERIC
@@ -191,11 +193,14 @@ BEGIN
 
   IF cfg.markup_type = 'percentage' THEN
     result := p_shop_cost * (1 + COALESCE(cfg.markup_rate, 0));
- ELSIF cfg.markup_type = 'flat_amount' THEN
+  ELSIF cfg.markup_type = 'flat_amount' THEN
     result := p_shop_cost + COALESCE(cfg.markup_amount, 0);
- ELSIF cfg.markup_type = 'tiered' THEN
+  ELSIF cfg.markup_type = 'tiered' THEN
     result := p_shop_cost; -- default, overridden by matching tier
-    FOR tier IN SELECT * FROM jsonb_array_elements(cfg.markup_rules)
+    FOR tier IN
+      SELECT value
+      FROM jsonb_array_elements(cfg.markup_rules) AS t(value)
+      ORDER BY (value->>'min')::numeric ASC
     LOOP
       IF p_shop_cost >= (tier->>'min')::numeric
          AND (tier->>'max' IS NULL OR p_shop_cost < (tier->>'max')::numeric) THEN
