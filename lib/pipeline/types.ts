@@ -2,6 +2,41 @@ export type DamageType = "dent" | "scratch" | "crease" | "puncture" | "scrape";
 export type Severity = "minor" | "moderate" | "severe";
 export type Panel = string;
 
+/** How a required field was resolved: sensor (LiDAR), image (CV/Gemini), user (manual entry), or missing. */
+export type FieldSource = "sensor" | "image" | "user" | "missing";
+
+/**
+ * Non-negotiable fields for every estimation job.
+ * Location + dimensions must come from LiDAR/video when possible;
+ * paint type is the most likely fallback-to-user candidate.
+ */
+export interface RequiredFields {
+  make: string;
+  model: string;
+  year: string;
+  paint_color: string | null;
+  paint_type: string | null; // matte, gloss, metallic, wrap, unknown
+  damage_location: string; // e.g. "front bumper", "driver door"
+  damage_type: DamageType;
+  depth_mm: number | null;
+  length_mm: number | null;
+  width_mm: number | null;
+  area_sq_in: number | null;
+}
+
+/** Per-field resolution tracking for the fallback hierarchy. */
+export type FieldResolution = Record<string, FieldSource>;
+
+export interface LidarScanData {
+  depth_mm: number | null;
+  length_mm: number | null;
+  width_mm: number | null;
+  volume_mm3: number | null;
+  finger_anchor_mm: number | null; // scale reference used
+  plane_fit_confidence: number | null;
+  point_cloud_url: string | null; // Supabase storage path if uploaded
+}
+
 export interface ImageExtraction {
   panels: Array<{
     panel: Panel;
@@ -12,6 +47,13 @@ export interface ImageExtraction {
   secondary_damage: string[];
   overall_severity: Severity;
   confidence: number;
+  // Dimension estimates from multi-scale video frames (rough, pixels-to-mm via context)
+  estimated_depth_mm: number | null;
+  estimated_length_mm: number | null;
+  estimated_width_mm: number | null;
+  estimated_area_sq_in: number | null;
+  paint_type_guess: string | null; // matte/gloss/metallic/wrap if visible
+  paint_color_guess: string | null;
 }
 
 export interface UserInput {
@@ -27,6 +69,10 @@ export interface UserInput {
   damageDescription?: string;
   customerName?: string;
   customerPhone?: string;
+  // LiDAR pass output from the iOS shell (optional until shell is wired)
+  lidar?: LidarScanData;
+  // Video pull-back frames (optional; may overlap with photos)
+  videoFrames?: string[];
 }
 
 export interface ReferenceRow {
@@ -80,4 +126,8 @@ export interface PipelineTrace {
   markup: MarkupResult | null;
   model_used: string | null;
   errors: string[];
+  // Fallback hierarchy results
+  field_resolution: FieldResolution | null;
+  missing_required_fields: string[];
+  requires_user_input: boolean;
 }
