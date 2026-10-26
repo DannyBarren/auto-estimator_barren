@@ -1,0 +1,4 @@
+source_type,vehicle_year,vehicle_make,vehicle_model,vehicle_trim,vehicle_body_style,paint_type,paint_color,paint_code,damage_location,damage_type,damage_severity,damage_notes,materials_cost,labor_hours,labor_rate,labor_cost,other_cost,total_shop_cost,estimated_customer_price,final_invoice_total,confidence
+shop_invoice,2019,Ford,F-150,XLT,truck,metallic,Agate Black,UM,front bumper,dent,moderate,Lower left corner crease,185.50,3.5,75.00,262.50,45.00,493.00,750.00,740.00,0.95
+shop_invoice,2021,Toyota,Camry,SE,sedan,pearl,Pearl White,070,driver door,scratch,minor,Deep scratch through clear coat into base,95.00,1.5,75.00,112.50,25.00,232.50,350.00,345.00,0.95
+manual_entry,2018,Honda,Civic,LX,sedan,solid,Rallye Red,R-530M,rear quarter panel,dent,moderate,Hail damage cluster 4 dents,120.00,2.0,75.00,150.00,30.00,300.00,450.00,,0.80
